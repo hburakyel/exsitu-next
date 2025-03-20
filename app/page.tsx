@@ -1,86 +1,584 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import MapView from "../components/map-view"
-import SearchBox from "../components/search-box"
-import ObjectGrid from "../components/object-grid"
-import { fetchMuseumObjects } from "../lib/api"
+import { fetchMuseumObjects, fetchAllMuseumObjects, clearApiCache } from "../lib/api"
 import type { MuseumObject, MapBounds } from "../types"
+import { useMediaQuery } from "../hooks/use-media-query"
+import { AlertTriangle, RefreshCcw } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { toast } from "@/components/ui/use-toast"
+import { Toaster } from "@/components/ui/toaster"
+import ResizableObjectContainer, { type ContainerSize } from "../components/resizable-object-container"
+import { countUniqueArcs } from "../lib/arc-utils"
 
 export default function Home() {
   const [objects, setObjects] = useState<MuseumObject[]>([])
+  const [filteredObjects, setFilteredObjects] = useState<MuseumObject[]>([])
+  const [allObjects, setAllObjects] = useState<MuseumObject[]>([])
   const [viewState, setViewState] = useState({
-    longitude: 0,
+    longitude: 0, // Default to world view
     latitude: 20,
-    zoom: 1.5,
+    zoom: 2, // Start zoomed out to show the world
+    name: "Site",
   })
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [totalCount, setTotalCount] = useState(0)
+  const [arcCount, setArcCount] = useState(0)
+  const [currentBounds, setCurrentBounds] = useState<MapBounds | null>(null)
+  const [locationName, setLocationName] = useState<string>(viewState.name || "")
+  const [isObjectGridVisible, setIsObjectGridVisible] = useState(true)
+  const [isRateLimited, setIsRateLimited] = useState(false)
+  const mapRef = useRef<any>(null)
+  const isMobile = useMediaQuery("(max-width: 768px)")
+  const [activeFilters, setActiveFilters] = useState({
+    from: [] as string[],
+    to: [] as string[],
+    institution: [] as string[],
+    country: [] as string[],
+  })
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false)
+  const [initialArcSelected, setInitialArcSelected] = useState(false)
+  const [mapLoadError, setMapLoadError] = useState(false)
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const [containerSize, setContainerSize] = useState<ContainerSize>("default")
+  // Add a new state variable for the search box
+  const [showSearchBox, setShowSearchBox] = useState(false)
+
+  // Add this handler function
+  const handleMapError = useCallback((error: string) => {
+    console.error("Map error detected:", error)
+    setMapLoadError(true)
+
+    // Show a toast notification
+    toast({
+      title: "Map Error",
+      description: "There was an error loading the map. Some features may be limited.",
+      variant: "destructive",
+    })
+  }, [])
+
+  // Fetch initial filter data (small subset for filtering)
+  useEffect(() => {
+    const fetchInitialFilterData = async () => {
+      try {
+        setIsLoading(true)
+        const { objects, pagination } = await fetchAllMuseumObjects(200) // Increased to 200 objects for more arcs
+        setAllObjects(objects)
+        setTotalCount(pagination.total)
+
+        // Calculate and set the arc count
+        const uniqueArcs = countUniqueArcs(objects)
+        setArcCount(uniqueArcs)
+
+        setInitialLoadComplete(true)
+        setIsLoading(false)
+      } catch (error) {
+        console.error("Failed to fetch initial filter data:", error)
+        setIsLoading(false)
+
+        if (error instanceof Error && error.message.includes("rate limit")) {
+          setIsRateLimited(true)
+          toast({
+            title: "Rate limit exceeded",
+            description: "The API is currently rate limited. Some features may be unavailable.",
+            variant: "destructive",
+          })
+        }
+      }
+    }
+
+    fetchInitialFilterData()
+  }, [])
+
+  // Apply filters to objects
+  useEffect(() => {
+    if (objects.length === 0) {
+      setFilteredObjects([])
+      return
+    }
+
+    let filtered = [...objects]
+
+    // Apply "from" filters
+    if (activeFilters.from.length > 0) {
+      filtered = filtered.filter(
+        (obj) => obj.attributes.place_name && activeFilters.from.includes(obj.attributes.place_name),
+      )
+    }
+
+    // Apply "to" filters
+    if (activeFilters.to.length > 0) {
+      filtered = filtered.filter(
+        (obj) => obj.attributes.institution_place && activeFilters.to.includes(obj.attributes.institution_place),
+      )
+    }
+
+    // Apply "institution" filters
+    if (activeFilters.institution.length > 0) {
+      filtered = filtered.filter(
+        (obj) => obj.attributes.institution_name && activeFilters.institution.includes(obj.attributes.institution_name),
+      )
+    }
+
+    // Apply "country" filters
+    if (activeFilters.country.length > 0) {
+      filtered = filtered.filter(
+        (obj) => obj.attributes.country && activeFilters.country.includes(obj.attributes.country),
+      )
+    }
+
+    setFilteredObjects(filtered)
+
+    // Update arc count based on filtered objects
+    const uniqueArcs = countUniqueArcs(filtered)
+    setArcCount(uniqueArcs)
+  }, [objects, activeFilters])
 
   useEffect(() => {
-    if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
-      setError("Mapbox token is missing. Please set the NEXT_PUBLIC_MAPBOX_TOKEN environment variable.")
+    console.log("API Base URL:", process.env.NEXT_PUBLIC_API_BASE_URL)
+    console.log("Environment variables:", {
+      NEXT_PUBLIC_MAPBOX_STYLE: process.env.NEXT_PUBLIC_MAPBOX_STYLE ? "Set" : "Not set",
+      NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
+    })
+
+    if (!process.env.NEXT_PUBLIC_MAPBOX_STYLE) {
+      setError("Mapbox style is missing. Please set the NEXT_PUBLIC_MAPBOX_STYLE environment variable.")
+    }
+    if (!process.env.NEXT_PUBLIC_API_BASE_URL) {
+      setError("API base URL is missing. Please set the NEXT_PUBLIC_API_BASE_URL environment variable.")
     }
   }, [])
 
-  const handleBoundsChange = async (bounds: MapBounds) => {
-    setIsLoading(true)
-    setError(null)
-    try {
-      const data = await fetchMuseumObjects(bounds)
-      console.log("Received data in handleBoundsChange:", data) // Log the received data
-      if (data && Array.isArray(data.data)) {
-        setObjects(data.data)
-      } else {
-        throw new Error("Invalid data structure received from API")
+  const fetchObjects = useCallback(
+    async (bounds: MapBounds, page: number, reset = false) => {
+      if (isRateLimited) {
+        toast({
+          title: "Rate limit active",
+          description: "Cannot fetch new data while rate limited. Please try again later.",
+          variant: "destructive",
+        })
+        return
       }
-    } catch (error) {
-      console.error("Failed to fetch objects:", error)
-      setError(error instanceof Error ? error.message : "An unknown error occurred")
-      setObjects([])
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
-  const handleLocationFound = (longitude: number, latitude: number) => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        console.log("Fetching objects with bounds:", bounds, "page:", page)
+        const { objects, pagination } = await fetchMuseumObjects(bounds, page)
+
+        console.log(`Fetched ${objects.length} objects out of ${pagination.total} total`)
+
+        if (objects && Array.isArray(objects)) {
+          setObjects((prevObjects) => {
+            const newObjects = reset || page === 1 ? objects : [...prevObjects, ...objects]
+            console.log(`Updated objects array: ${newObjects.length} objects`)
+
+            // Calculate arc count for the new objects
+            const uniqueArcs = countUniqueArcs(newObjects)
+            setArcCount(uniqueArcs)
+
+            return newObjects
+          })
+          setTotalCount(pagination.total)
+          setHasMore(pagination.page < pagination.pageCount)
+          setCurrentPage(pagination.page)
+
+          // Reset rate limited state if successful
+          if (isRateLimited) {
+            setIsRateLimited(false)
+          }
+        } else {
+          throw new Error("Invalid data structure received from API")
+        }
+      } catch (error) {
+        console.error("Failed to fetch objects:", error)
+
+        // Check if it's a rate limit error
+        if (error instanceof Error && error.message.includes("rate limit")) {
+          setIsRateLimited(true)
+          toast({
+            title: "Rate limit exceeded",
+            description: "The API is currently rate limited. Some features may be unavailable.",
+            variant: "destructive",
+          })
+        } else {
+          setError(error instanceof Error ? error.message : "An unknown error occurred")
+        }
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [isRateLimited],
+  )
+
+  // Only updating the handleBoundsChange function to use our proxy
+  const handleBoundsChange = useCallback(
+    async (bounds: MapBounds) => {
+      // Skip if rate limited
+      if (isRateLimited) return
+
+      console.log("Bounds changed:", bounds)
+      setCurrentBounds(bounds)
+
+      // Always fetch objects when bounds change
+      await fetchObjects(bounds, 1, true)
+
+      try {
+        const center = {
+          longitude: (bounds.east + bounds.west) / 2,
+          latitude: (bounds.north + bounds.south) / 2,
+        }
+
+        // Use our server-side proxy instead of calling Mapbox directly
+        const params = new URLSearchParams({
+          endpoint: "geocoding",
+          lng: center.longitude.toString(),
+          lat: center.latitude.toString(),
+          types: "place",
+        })
+
+        const response = await fetch(`/api/mapbox-proxy?${params.toString()}`)
+        const data = await response.json()
+
+        if (data?.features?.length > 0) {
+          setLocationName(data.features[0].text) // City name only
+        } else {
+          // Don't display coordinates
+          setLocationName("Site")
+        }
+      } catch (error) {
+        console.error("Error fetching location name:", error)
+        // Set a default name instead of empty
+        setLocationName("Site")
+      }
+    },
+    [fetchObjects, isRateLimited],
+  )
+
+  const handleLoadMore = useCallback(() => {
+    if (currentBounds && hasMore && !isLoading && !isRateLimited) {
+      const nextPage = currentPage + 1
+      fetchObjects(currentBounds, nextPage)
+    }
+  }, [currentBounds, hasMore, isLoading, currentPage, fetchObjects, isRateLimited])
+
+  const handleLocationFound = useCallback((longitude: number, latitude: number, name: string) => {
     setViewState({
       longitude,
       latitude,
-      zoom: 8,
+      zoom: 10,
+      name,
     })
-  }
+    setLocationName(name)
+  }, [])
+
+  const handleObjectClick = useCallback((longitude: number, latitude: number) => {
+    // Update the view state
+    setViewState((prev) => ({
+      ...prev,
+      longitude,
+      latitude,
+      zoom: 12,
+    }))
+
+    // Use the map reference to fly to the location
+    if (mapRef.current?.map) {
+      mapRef.current.map.flyTo({
+        center: [longitude, latitude],
+        zoom: 12,
+        essential: true,
+        duration: 1500,
+      })
+    }
+  }, [])
+
+  const handleFilterChange = useCallback(
+    (fromFilters: string[], toFilters: string[], institutionFilters: string[], countryFilters: string[]) => {
+      setActiveFilters({
+        from: fromFilters,
+        to: toFilters,
+        institution: institutionFilters,
+        country: countryFilters,
+      })
+    },
+    [],
+  )
+
+  // Handle retry after rate limit
+  const handleRetry = useCallback(() => {
+    // Clear the API cache
+    clearApiCache()
+    setIsRateLimited(false)
+
+    // Retry fetching data
+    if (currentBounds) {
+      fetchObjects(currentBounds, 1, true)
+    } else {
+      // Fetch initial objects if no bounds set
+      fetchAllMuseumObjects(50)
+        .then(({ objects, pagination }) => {
+          setAllObjects(objects)
+          setTotalCount(pagination.total)
+          setArcCount(countUniqueArcs(objects))
+        })
+        .catch((error) => {
+          console.error("Failed to fetch initial objects on retry:", error)
+        })
+    }
+
+    toast({
+      title: "Retrying",
+      description: "Attempting to fetch data again...",
+    })
+  }, [currentBounds, fetchObjects])
+
+  // Memoize the objects to pass to components
+  const displayObjects = useMemo(() => {
+    const objectsToDisplay = filteredObjects && filteredObjects.length > 0 ? filteredObjects : objects || []
+
+    // Update arc count based on displayed objects
+    if (objectsToDisplay.length !== objects.length || filteredObjects.length > 0) {
+      const uniqueArcs = countUniqueArcs(objectsToDisplay)
+      setArcCount(uniqueArcs)
+    }
+
+    // Debug: Check if objects have valid coordinates for arcs
+    if (objectsToDisplay.length > 0) {
+      const validForArcs = objectsToDisplay.filter(
+        (obj) =>
+          obj.attributes?.longitude != null &&
+          obj.attributes?.latitude != null &&
+          obj.attributes?.institution_longitude != null &&
+          obj.attributes?.institution_latitude != null &&
+          !isNaN(obj.attributes.longitude) &&
+          !isNaN(obj.attributes.latitude) &&
+          !isNaN(obj.attributes.institution_longitude) &&
+          !isNaN(obj.attributes.institution_latitude),
+      )
+      console.log(`Objects with valid coordinates for arcs: ${validForArcs.length} out of ${objectsToDisplay.length}`)
+    }
+
+    return objectsToDisplay
+  }, [filteredObjects, objects])
+
+  // Toggle view mode between grid and list
+  const toggleViewMode = useCallback(() => {
+    setViewMode((prev) => (prev === "grid" ? "list" : "grid"))
+  }, [])
+
+  // Toggle container size
+  const toggleContainerSize = useCallback(() => {
+    setContainerSize((prev) => {
+      if (prev === "default") return "expanded"
+      if (prev === "expanded") return "minimal"
+      return "default"
+    })
+  }, [])
+
+  // Add this effect to select a random arc after initial data load
+  useEffect(() => {
+    // Only run this once when we have objects and haven't selected an arc yet
+    if (allObjects && allObjects.length > 0 && !initialArcSelected && initialLoadComplete) {
+      console.log("Selecting random arc from", allObjects.length, "objects")
+
+      // Filter objects that have valid coordinates for both source and destination
+      const validObjects = allObjects.filter(
+        (obj) =>
+          obj.attributes?.longitude &&
+          obj.attributes?.latitude &&
+          obj.attributes?.institution_longitude &&
+          obj.attributes?.institution_latitude &&
+          // Ensure source and destination are different (there's an actual movement)
+          (obj.attributes.longitude !== obj.attributes.institution_longitude ||
+            obj.attributes.latitude !== obj.attributes.institution_latitude),
+      )
+
+      console.log("Found", validObjects.length, "valid objects with arcs")
+
+      if (validObjects.length > 0) {
+        // Select a random object
+        const randomIndex = Math.floor(Math.random() * validObjects.length)
+        const randomObject = validObjects[randomIndex]
+
+        console.log("Selected random object:", randomObject.id)
+
+        // Fly to the source location (where the artifact is from)
+        const newViewState = {
+          longitude: randomObject.attributes.longitude,
+          latitude: randomObject.attributes.latitude,
+          zoom: 8,
+          name: randomObject.attributes.place_name || "Selected Location",
+        }
+
+        setViewState(newViewState)
+
+        // If we have a map reference, fly to the location
+        if (mapRef.current?.map) {
+          mapRef.current.map.flyTo({
+            center: [newViewState.longitude, newViewState.latitude],
+            zoom: newViewState.zoom,
+            essential: true,
+            duration: 2000,
+          })
+        }
+
+        // Set location name
+        setLocationName(randomObject.attributes.place_name || "Selected Location")
+
+        // Show a toast notification with styling matching the object container
+        toast({
+          title: "Arc Selected",
+          description: `Viewing arc from ${randomObject.attributes.place_name || "Unknown"} to ${randomObject.attributes.institution_name || "Unknown"}`,
+          className: "bg-black/80 text-white border border-gray-700 backdrop-blur-sm",
+          position: "top-right",
+        })
+      } else {
+        // If no valid objects, just set initialArcSelected to true to prevent further attempts
+        setInitialArcSelected(true)
+
+        // Set a default view
+        setViewState({
+          longitude: 0,
+          latitude: 20,
+          zoom: 2,
+          name: "Site",
+        })
+
+        setLocationName("Site")
+      }
+    }
+  }, [allObjects, initialArcSelected, initialLoadComplete, toast])
+
+  // Add this debug function at the top of the component, before the return statement
+  useEffect(() => {
+    // Debug function to check if objects have valid coordinates for arcs
+    const checkValidObjects = () => {
+      if (objects.length === 0) return
+
+      const validObjects = objects.filter(
+        (obj) =>
+          obj.attributes?.longitude != null &&
+          obj.attributes?.latitude != null &&
+          obj.attributes?.institution_longitude != null &&
+          obj.attributes?.institution_latitude != null &&
+          !isNaN(obj.attributes.longitude) &&
+          !isNaN(obj.attributes.latitude) &&
+          !isNaN(obj.attributes.institution_longitude) &&
+          !isNaN(obj.attributes.institution_latitude),
+      )
+
+      console.log(`Objects with valid coordinates for arcs: ${validObjects.length} out of ${objects.length}`)
+
+      if (validObjects.length > 0) {
+        console.log("Sample object:", {
+          id: validObjects[0].id,
+          source: [validObjects[0].attributes.longitude, validObjects[0].attributes.latitude],
+          target: [validObjects[0].attributes.institution_longitude, validObjects[0].attributes.institution_latitude],
+        })
+      }
+    }
+
+    checkValidObjects()
+  }, [objects])
 
   if (error) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-red-50 text-red-500">
-        <p>{error}</p>
+        <div className="text-center p-8">
+          <AlertTriangle className="h-12 w-12 mx-auto mb-4" />
+          <p className="text-sm font-normal mb-4">{error}</p>
+          <Button onClick={handleRetry} variant="outline" className="mx-auto">
+            <RefreshCcw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </div>
       </div>
     )
   }
 
   return (
     <main className="flex min-h-screen flex-col">
-      <div className="fixed top-4 left-4 z-10 w-full max-w-sm">
-        <SearchBox onLocationFound={handleLocationFound} />
-      </div>
+      <div className="h-screen w-full relative">
+        {/* Full screen map */}
+        <MapView
+          ref={mapRef}
+          initialViewState={{
+            ...viewState,
+            name: locationName,
+          }}
+          onBoundsChange={handleBoundsChange}
+          objects={displayObjects}
+          allObjects={allObjects}
+          onError={handleMapError}
+          totalCount={totalCount}
+          onToggleView={toggleViewMode}
+          onExpandView={toggleContainerSize}
+          viewMode={viewMode}
+          containerSize={containerSize}
+          locationName={locationName}
+          setShowSearchBox={setShowSearchBox}
+        />
 
-      <div className="fixed inset-0">
-        <MapView initialViewState={viewState} onBoundsChange={handleBoundsChange} objects={objects} />
-      </div>
+        {mapLoadError && (
+          <div className="absolute top-16 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg z-50">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <p className="text-sm">Map failed to load. You can still browse objects in the panel.</p>
+            </div>
+            <Button className="mt-2 w-full" size="sm" onClick={() => window.location.reload()}>
+              <RefreshCcw className="h-4 w-4 mr-2" />
+              Reload Page
+            </Button>
+          </div>
+        )}
 
-      <div className="fixed right-4 top-4 bottom-4 w-full max-w-md bg-white/95 dark:bg-gray-900/95 rounded-lg shadow-lg overflow-hidden">
-        <div className="p-4 h-full overflow-auto">
-          <h2 className="text-lg font-semibold mb-4">Museum Objects</h2>
-          {isLoading ? (
-            <p>Loading...</p>
-          ) : error ? (
-            <p className="text-red-500">{error}</p>
-          ) : (
-            <ObjectGrid objects={objects} />
-          )}
-        </div>
+        {/* Object grid floating panel */}
+        {isObjectGridVisible && (
+          <ResizableObjectContainer
+            objects={displayObjects}
+            onLoadMore={handleLoadMore}
+            hasMore={hasMore}
+            totalCount={totalCount}
+            arcCount={arcCount}
+            isLoading={isLoading}
+            onObjectClick={handleObjectClick}
+            onLocationFound={handleLocationFound}
+            locationName={locationName}
+            onClose={() => setIsObjectGridVisible(false)}
+            isMobile={isMobile}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            containerSize={containerSize}
+            setContainerSize={setContainerSize}
+            showSearchBox={showSearchBox}
+            setShowSearchBox={setShowSearchBox}
+          />
+        )}
+
+        {/* Rate limit warning */}
+        {isRateLimited && (
+          <div className="absolute top-16 right-4 z-50 bg-red-500 text-white p-3 rounded-md shadow-lg">
+            <div className="flex items-center">
+              <AlertTriangle className="h-5 w-5 mr-2" />
+              <span className="text-sm">API rate limited</span>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="mt-2 w-full bg-white/20 hover:bg-white/30 text-white"
+              onClick={handleRetry}
+            >
+              <RefreshCcw className="h-3 w-3 mr-2" />
+              Retry
+            </Button>
+          </div>
+        )}
       </div>
+      <Toaster />
     </main>
   )
 }

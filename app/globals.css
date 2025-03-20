@@ -2,93 +2,546 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-}
-
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    --foreground: 222.2 84% 4.9%;
+
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card-foreground: 222.2 84% 4.9%;
+
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
     --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 0%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 70%;
+
+    --accent: 0 0% 10%;
+    --accent-foreground: 0 0% 100%;
+
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 0 0% 80%;
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border font-mono text-sm font-normal;
   }
   body {
     @apply bg-background text-foreground;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+  html,
+  body {
+    height: 100%;
+    width: 100%;
+  }
+
+  /* Optimize font rendering */
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Apply monospace font to all text elements */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  span,
+  a,
+  button,
+  input,
+  textarea,
+  select,
+  label,
+  div {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   }
 }
+
+/* Fix the map container styles in the CSS */
+/* Replace the existing mapboxgl-map, mapboxgl-canvas, and map-container styles with these */
+
+.mapboxgl-map {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.mapboxgl-canvas {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+  outline: none;
+  z-index: 2;
+}
+
+.map-container {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+/* Add z-index rules for map elements */
+.mapboxgl-control-container {
+  z-index: 10;
+}
+
+/* Ensure UI elements are above map layers */
+.map-controls {
+  z-index: 50;
+}
+
+.data-status-panel {
+  z-index: 50;
+}
+
+/* Make sure tooltips and popups are above everything */
+.mapboxgl-popup {
+  z-index: 60;
+}
+
+/* Map tooltip styles */
+.mapboxgl-tooltip {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  pointer-events: none;
+  z-index: 60;
+  max-width: 300px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Sidebar styles */
+.sidebar {
+  transition: width 0.3s ease-in-out;
+  will-change: width;
+  contain: layout style;
+}
+
+/* Optimize image loading */
+img {
+  content-visibility: auto;
+  contain: content;
+}
+
+/* Optimize animations */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Optimize scrolling */
+.overflow-auto,
+.overflow-y-auto {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent layout shifts */
+.h-screen {
+  height: 100vh;
+  height: calc(var(--vh, 1vh) * 100);
+}
+
+/* Fix for mobile viewport height */
+:root {
+  --vh: 1vh;
+}
+
+/* Optimize for GPU rendering */
+.transform,
+.transition,
+.animate-spin {
+  will-change: transform;
+}
+
+/* Prevent FOUC (Flash of Unstyled Content) */
+.invisible-until-loaded {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.loaded {
+  opacity: 1;
+}
+
+/* Add optimizations for arc rendering */
+.deck-layer {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  contain: content;
+}
+
+/* Optimize arc animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.arc-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Optimize the full-screen grid view */
+.full-screen-grid {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.grid-container {
+  contain: content;
+  content-visibility: auto;
+}
+
+/* Improve image loading performance */
+.grid-image {
+  content-visibility: auto;
+  contain: layout style paint;
+}
+
+/* RGB Green stroke border for image hover */
+.group-hover\:ring-\[rgb$$0\,255\,0$$\] {
+  box-shadow: 0 0 0 2px rgb(0, 255, 0);
+}
+
+/* Optimize image gallery transitions */
+.image-gallery-enter {
+  opacity: 0;
+}
+.image-gallery-enter-active {
+  opacity: 1;
+  transition: opacity 300ms;
+}
+.image-gallery-exit {
+  opacity: 1;
+}
+.image-gallery-exit-active {
+  opacity: 0;
+  transition: opacity 300ms;
+}
+
+/* Blue highlight for selected image */
+.ring-blue-500 {
+  box-shadow: 0 0 0 2px rgb(59, 130, 246);
+}
+
+/* Masonry-like grid layout */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-auto-rows: minmax(0, auto);
+  grid-gap: 10px;
+}
+
+/* Custom modal styling to match reference */
+.resizable-panel {
+  backdrop-filter: blur(4px);
+  background-color: rgba(229, 229, 229, 0.9);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.dark .resizable-panel {
+  background-color: rgba(55, 65, 81, 0.9);
+}
+
+/* Image gallery styling */
+.image-gallery-modal {
+  background-color: rgba(255, 255, 255, 0.98);
+  border-radius: 8px;
+  max-width: 100%;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.dark .image-gallery-modal {
+  background-color: rgba(17, 24, 39, 0.98);
+}
+
+.image-container {
+  background-color: white;
+  border-radius: 8px;
+  margin: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.dark .image-container {
+  background-color: rgb(17, 24, 39);
+}
+
+/* Image gallery overlay */
+.image-gallery-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 49;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Image gallery animation */
+@keyframes galleryFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.image-gallery-modal {
+  animation: galleryFadeIn 0.2s ease-out;
+}
+
+/* Mobile image gallery animation */
+@keyframes galleryMobileFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 768px) {
+  .image-gallery-modal {
+    animation: galleryMobileFadeIn 0.2s ease-out;
+  }
+}
+
+/* Add these styles at the end of the file to customize the Mapbox controls */
+
+/* Hide attribution */
+.mapboxgl-ctrl-attrib {
+  display: none !important;
+}
+
+/* Style navigation controls to match header */
+.mapboxgl-ctrl-group {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  border-radius: 6px !important;
+  border: none !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+.mapboxgl-ctrl-group button {
+  width: 28px !important;
+  height: 28px !important;
+  margin: 0 !important;
+  color: white !important;
+  background-color: transparent !important;
+  border: none !important;
+}
+
+.mapboxgl-ctrl-group button:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.mapboxgl-ctrl-group button span {
+  filter: invert(1) !important;
+}
+
+.mapboxgl-ctrl-group button.mapboxgl-ctrl-zoom-in,
+.mapboxgl-ctrl-group button.mapboxgl-ctrl-zoom-out {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Style the globe button */
+.mapboxgl-ctrl-globe {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Position the world view control below the navigation control */
+.world-view-control {
+  margin-top: 5px !important;
+}
+
+/* Style the globe icon */
+.mapboxgl-ctrl-globe svg {
+  width: 16px !important;
+  height: 16px !important;
+  stroke: white !important;
+  stroke-width: 2px !important;
+}
+
+/* Hide Mapbox logo */
+.mapboxgl-ctrl-logo {
+  display: none !important;
+}
+
+/* Arc tooltip styles */
+.arc-tooltip {
+  background-color: rgba(0, 0, 0, 0.85) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
+  padding: 0 !important;
+  max-width: 300px !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+  z-index: 1000 !important; /* Ensure tooltip is above other elements */
+}
+
+.arc-tooltip .mapboxgl-popup-content {
+  background-color: transparent !important;
+  padding: 0 !important;
+  border-radius: 6px !important;
+}
+
+.arc-tooltip .mapboxgl-popup-tip {
+  border-top-color: rgba(0, 0, 0, 0.85) !important;
+  border-bottom-color: rgba(0, 0, 0, 0.85) !important;
+}
+
+.arc-tooltip-content {
+  padding: 10px 12px;
+  color: white;
+  font-size: 12px;
+}
+
+.arc-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.arc-tooltip-label {
+  color: rgba(255, 255, 255, 0.7);
+  margin-right: 12px;
+  min-width: 50px;
+}
+
+.arc-tooltip-value {
+  color: white;
+  font-weight: 500;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Highlight the arc when hovering */
+.arc-hover {
+  stroke-width: 5px !important;
+  stroke: rgb(120, 255, 120) !important;
+  stroke-opacity: 1 !important;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Cross-browser image gallery fixes */
+.image-gallery-modal img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Ensure consistent flexbox behavior */
+.flex {
+  display: flex;
+}
+
+.flex-1 {
+  flex: 1;
+  min-height: 0; /* Important for Safari */
+}
+
+/* Ensure consistent object-fit behavior */
+.object-contain {
+  object-fit: contain;
+}
+
+/* Ensure consistent fixed positioning */
+.fixed {
+  position: fixed;
+}
+
