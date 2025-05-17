@@ -1,17 +1,15 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Maximize2, Minimize2, X, Download } from "lucide-react"
+import { Maximize2, Minimize2, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import ObjectGrid from "./object-grid"
 import ObjectList from "./object-list"
 import type { MuseumObject } from "../types"
 import ImageGallery from "./image-gallery"
-import StatsPanel from "./stats-panel"
-import SearchBox from "./search-box"
-import ArcInfoPanel from "./arc-info-panel"
+import { Spinner } from "@/components/ui/spinner"
 
-export type ContainerSize = "default" | "expanded" | "minimal"
+export type ContainerSize = "default" | "expanded"
 
 interface ResizableObjectContainerProps {
   objects: MuseumObject[]
@@ -81,18 +79,6 @@ export default function ResizableObjectContainer({
             inset: 0,
             borderRadius: 0, // Remove border radius on mobile full screen
           }
-        case "minimal":
-          return {
-            width: "auto", // Auto width to fit content
-            height: "auto", // Auto height to fit content
-            top: "4rem", // Position at the top with some margin
-            right: "1rem", // Reduced right margin for mobile
-            padding: "2px", // No padding
-            opacity: 1, // Always visible
-            pointerEvents: "auto", // Always interactive
-            visibility: "visible" as const,
-            overflow: "hidden",
-          }
         case "default":
         default:
           return {
@@ -106,6 +92,8 @@ export default function ResizableObjectContainer({
             borderTopRightRadius: "12px",
             borderBottomLeftRadius: 0,
             borderBottomRightRadius: 0,
+            paddingLeft: "1rem", // Add 4 units of space on left
+            paddingRight: "1rem", // Add 4 units of space on right
           }
       }
     } else {
@@ -115,18 +103,6 @@ export default function ResizableObjectContainer({
           return {
             width: "calc(100% - 2rem)",
             height: "calc(100vh - 2rem)",
-          }
-        case "minimal":
-          return {
-            width: "auto", // Auto width to fit content
-            height: "40px", // Fixed height just for the button
-            right: "1rem", // Match the right position of other modes
-            top: "1rem", // Match the top position of other modes
-            padding: "0", // No padding
-            opacity: 1, // Always visible
-            pointerEvents: "auto", // Always interactive
-            visibility: "visible" as const,
-            overflow: "hidden",
           }
         case "default":
         default:
@@ -140,7 +116,7 @@ export default function ResizableObjectContainer({
 
   // Toggle between sizes
   const toggleSize = () => {
-    setContainerSize(containerSize === "default" ? "expanded" : containerSize === "expanded" ? "minimal" : "default")
+    setContainerSize(containerSize === "default" ? "expanded" : containerSize === "expanded" ? "default" : "default")
   }
 
   // Toggle view mode
@@ -229,114 +205,84 @@ export default function ResizableObjectContainer({
       className={`fixed ${
         isMobile
           ? containerSize === "default"
-            ? "bottom-0 left-0 right-0 shadow-lg"
+            ? "bottom-0 left-4 right-4 shadow-lg"
             : containerSize === "expanded"
               ? "inset-0"
               : "top-4 right-4"
           : "top-4 right-4 bottom-4"
-      } bg-black/80 text-white rounded-lg shadow-lg backdrop-blur-md border border-gray-700 z-20 overflow-hidden`}
+      } bg-white rounded-lg shadow-lg z-20 overflow-hidden`}
       style={containerStyle}
     >
       <div className={`${containerSize === "minimal" ? "flex flex-col" : "h-full flex flex-col"}`}>
         {/* Fixed header with expand button - make it more touch-friendly on mobile */}
         {containerSize !== "minimal" && (
-          <div className="sticky top-0 z-30 p-3 border-b border-gray-700 flex items-center justify-between bg-black/80 text-white backdrop-blur-md">
-            <div className="text-sm truncate">
-              <span className="text-gray-400">
-                {totalCount} item{totalCount !== 1 ? "s" : ""}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              {/* Download button - show on both mobile and desktop */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className={isMobile ? "h-8 w-8" : "h-6 w-6"}
-                onClick={downloadObjectsAsCSV}
-              >
-                <Download className="h-4 w-4" />
-              </Button>
+          <div className="sticky top-0 z-30 p-3 flex flex-col bg-white">
+            <div className="flex items-center justify-between">
+              <div className="text-sm truncate">
+                <span className="panel-text-muted flex items-center">
+                  {totalCount} item{totalCount !== 1 ? "s" : ""}
+                  {isLoading && <Spinner className="ml-2 h-3 w-3" />}
+                  {!isLoading && objects.length > 0 && (
+                    <div
+                      className="ml-2 h-2 w-2 rounded-full bg-green-500 animate-fadeIn"
+                      style={{ animationDuration: "0.5s" }}
+                    ></div>
+                  )}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* View toggle buttons */}
+                <div className="mr-2">
+                  <Button variant="secondary" size="sm" className="h-6 px-2" onClick={toggleViewMode}>
+                    {viewMode === "grid" ? "Grid" : "Table"}
+                  </Button>
+                </div>
 
-              {/* Expand/minimize button */}
-              <Button variant="ghost" size="icon" className={isMobile ? "h-8 w-8" : "h-6 w-6"} onClick={toggleSize}>
-                {containerSize === "expanded" ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-              </Button>
-            </div>
-          </div>
-        )}
+                {/* Download button */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={isMobile ? "h-8 w-8" : "h-6 w-6"}
+                  onClick={downloadObjectsAsCSV}
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
 
-        {/* Arc Info Panel - Only show when not in minimal mode */}
-        {containerSize !== "minimal" && (
-          <ArcInfoPanel objects={objects} viewMode={viewMode} onToggleViewMode={toggleViewMode} />
-        )}
-
-        {/* Search Box Panel - Show when search box is visible and NOT in minimal mode */}
-        {showSearchBox && containerSize !== "minimal" && (
-          <div className="p-3 border-b border-gray-700 bg-black/80 text-white backdrop-blur-md">
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-sm font-medium">Search Location</h3>
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowSearchBox(false)}>
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-            <SearchBox onLocationFound={onLocationFound} onClose={() => setShowSearchBox(false)} />
-
-            {/* Include Stats Panel directly in search box */}
-            <div className="mt-4 pt-4 border-t border-gray-700">
-              <h3 className="text-sm font-medium mb-2">Data Status</h3>
-              <StatsPanel embedded={true} defaultExpanded={true} />
+                {/* Expand/minimize button */}
+                <Button variant="ghost" size="icon" className={isMobile ? "h-8 w-8" : "h-6 w-6"} onClick={toggleSize}>
+                  {containerSize === "expanded" ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
           </div>
         )}
 
-        {containerSize === "minimal" ? (
-          <div className="p-2 flex items-center justify-end gap-2">
-            {/* Download button - same styling as other modes */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className={isMobile ? "h-8 w-8" : "h-6 w-6"}
-              onClick={downloadObjectsAsCSV}
-            >
-              <Download className="h-4 w-4" />
-            </Button>
+        {/* Remove the Search Box Panel section completely */}
 
-            {/* Expand button - same styling as other modes */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className={isMobile ? "h-8 w-8" : "h-6 w-6"}
-              onClick={() => setContainerSize("default")}
-            >
-              <Maximize2 className="h-4 w-4" />
-            </Button>
-          </div>
-        ) : (
-          <div className="flex-1 overflow-auto bg-black/80 backdrop-blur-md">
-            {viewMode === "grid" ? (
-              <ObjectGrid
-                objects={objects}
-                onLoadMore={onLoadMore}
-                hasMore={hasMore}
-                totalCount={totalCount}
-                isLoading={isLoading}
-                onObjectClick={(longitude, latitude, index) => handleObjectClick(longitude, latitude, index)}
-                isFullscreen={containerSize === "expanded"}
-                panelSize={containerSize === "expanded" ? 100 : 40}
-                mobileColumns={3}
-              />
-            ) : (
-              <ObjectList
-                objects={objects}
-                onLoadMore={onLoadMore}
-                hasMore={hasMore}
-                totalCount={totalCount}
-                isLoading={isLoading}
-                onObjectClick={(longitude, latitude, index) => handleObjectClick(longitude, latitude, index)}
-              />
-            )}
-          </div>
-        )}
+        <div className="flex-1 overflow-auto bg-white">
+          {viewMode === "grid" ? (
+            <ObjectGrid
+              objects={objects}
+              onLoadMore={onLoadMore}
+              hasMore={hasMore}
+              totalCount={totalCount}
+              isLoading={isLoading}
+              onObjectClick={(longitude, latitude, index) => handleObjectClick(longitude, latitude, index)}
+              isFullscreen={containerSize === "expanded"}
+              panelSize={containerSize === "expanded" ? 100 : 40}
+              mobileColumns={3}
+            />
+          ) : (
+            <ObjectList
+              objects={objects}
+              onLoadMore={onLoadMore}
+              hasMore={hasMore}
+              totalCount={totalCount}
+              isLoading={isLoading}
+              onObjectClick={(longitude, latitude, index) => handleObjectClick(longitude, latitude, index)}
+            />
+          )}
+        </div>
       </div>
 
       {/* Image Gallery - positioned and sized based on device and container size */}
@@ -352,4 +298,3 @@ export default function ResizableObjectContainer({
     </div>
   )
 }
-

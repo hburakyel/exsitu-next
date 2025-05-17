@@ -21,7 +21,7 @@ export function Toaster() {
         }
 
         return (
-          <Toast key={id} {...props}>
+          <Toast key={id} {...props} className="bg-white text-black border border-gray-200 shadow-md">
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && <ToastDescription>{description}</ToastDescription>}
@@ -35,4 +35,3 @@ export function Toaster() {
     </ToastProvider>
   )
 }
-

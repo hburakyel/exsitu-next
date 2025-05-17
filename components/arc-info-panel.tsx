@@ -133,13 +133,12 @@ export default function ArcInfoPanel({ objects, viewMode, onToggleViewMode, clas
   return (
     <div
       ref={panelRef}
-      className={`w-full bg-black/80 text-white border-b border-gray-700 backdrop-blur-md transition-all duration-300 ${
-        isSticky ? "sticky top-12 z-20" : ""
-      } ${className}`}
+      className={`w-full bg-white transition-all duration-300 ${isSticky ? "sticky top-12 z-20" : ""} ${className}`}
     >
       <div className="flex items-center justify-between p-2">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">Info</span>
+          {!isCollapsed && <span className="text-xs panel-text-muted">{objects.length} items</span>}
         </div>
         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsCollapsed(!isCollapsed)}>
           {isCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
@@ -147,11 +146,11 @@ export default function ArcInfoPanel({ objects, viewMode, onToggleViewMode, clas
       </div>
 
       {!isCollapsed && (
-        <div className="p-2 pt-0 text-xs">
+        <div className="p-2 pt-0 text-xs bg-white">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {/* Arcs */}
             <div>
-              <h3 className="text-xs text-gray-400 mb-1">Arc</h3>
+              <h3 className="text-xs panel-text-muted mb-1">Arc</h3>
               <div className="space-y-0.5">
                 {arcs.map((arc, index) => (
                   <div key={index} className="flex flex-col">
@@ -159,9 +158,9 @@ export default function ArcInfoPanel({ objects, viewMode, onToggleViewMode, clas
                       <span className="truncate max-w-[70%]">
                         {arc.from} → {arc.to}
                       </span>
-                      <span className="ml-2 text-gray-400">{arc.count}</span>
+                      <span className="ml-2 panel-text-muted">{arc.count}</span>
                     </div>
-                    <div className="text-gray-500 text-[10px]">
+                    <div className="panel-text-muted text-[10px]">
                       {arc.fromCity && arc.fromCountry ? `${arc.fromCity}, ${arc.fromCountry}` : ""}
                       {arc.fromCity || arc.fromCountry ? " → " : ""}
                       {arc.toCity && arc.toCountry ? `${arc.toCity}, ${arc.toCountry}` : ""}
@@ -173,16 +172,16 @@ export default function ArcInfoPanel({ objects, viewMode, onToggleViewMode, clas
 
             {/* Institutions */}
             <div>
-              <h3 className="text-xs text-gray-400 mb-1"> Collection</h3>
+              <h3 className="text-xs panel-text-muted mb-1"> Collection</h3>
               <div className="space-y-0.5">
                 {institutions.map((inst, index) => (
                   <div key={index} className="flex flex-col">
                     <div className="flex justify-between">
                       <span className="truncate max-w-[70%]">{inst.name}</span>
-                      <span className="ml-2 text-gray-400">{inst.count}</span>
+                      <span className="ml-2 panel-text-muted">{inst.count}</span>
                     </div>
                     {(inst.city || inst.country) && (
-                      <div className="text-gray-500 text-[10px]">
+                      <div className="panel-text-muted text-[10px]">
                         {inst.city && inst.country ? `${inst.city}, ${inst.country}` : inst.city || inst.country}
                       </div>
                     )}
@@ -193,16 +192,16 @@ export default function ArcInfoPanel({ objects, viewMode, onToggleViewMode, clas
 
             {/* Origins */}
             <div>
-              <h3 className="text-xs text-gray-400 mb-1">From</h3>
+              <h3 className="text-xs panel-text-muted mb-1">From</h3>
               <div className="space-y-0.5">
                 {origins.map((origin, index) => (
                   <div key={index} className="flex flex-col">
                     <div className="flex justify-between">
                       <span className="truncate max-w-[70%]">{origin.name}</span>
-                      <span className="ml-2 text-gray-400">{origin.count}</span>
+                      <span className="ml-2 panel-text-muted">{origin.count}</span>
                     </div>
                     {(origin.city || origin.country) && (
-                      <div className="text-gray-500 text-[10px]">
+                      <div className="panel-text-muted text-[10px]">
                         {origin.city && origin.country
                           ? `${origin.city}, ${origin.country}`
                           : origin.city || origin.country}
@@ -214,8 +213,8 @@ export default function ArcInfoPanel({ objects, viewMode, onToggleViewMode, clas
             </div>
           </div>
 
-          <div className="flex justify-between items-center mt-2 pt-1 border-t border-gray-700">
-            <div className="text-xs text-gray-400">
+          <div className="flex justify-between items-center mt-2 pt-1">
+            <div className="text-xs panel-text-muted">
               <span>View</span>
             </div>
             <div className="flex gap-1">
@@ -242,4 +241,3 @@ export default function ArcInfoPanel({ objects, viewMode, onToggleViewMode, clas
     </div>
   )
 }
-

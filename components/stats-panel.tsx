@@ -160,11 +160,39 @@ export default function StatsPanel(props: StatsPanelProps) {
     }
   }
 
+  // Update the section headers and toggle buttons to match map header style
+  const renderSectionHeader = (title: string, count: number, section: string) => (
+    <div className="flex items-center justify-between">
+      <span className="panel-text-muted">
+        {count} {title}
+        {count !== 1 ? "s" : ""}
+      </span>
+      {count > 0 && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-5 px-1 py-0 text-xs flex items-center gap-1"
+          onClick={() => toggleSection(section)}
+        >
+          {effectiveExpandedSection === section || effectiveExpandedSection === "all" ? (
+            <>
+              Hide <ChevronUp className="h-3 w-3" />
+            </>
+          ) : (
+            <>
+              Show <ChevronDown className="h-3 w-3" />
+            </>
+          )}
+        </Button>
+      )}
+    </div>
+  )
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-2">
         <Spinner className="h-4 w-4 mr-2" />
-        <span className="text-xs text-gray-500">Loading statistics...</span>
+        <span className="text-xs panel-text-muted">Loading statistics...</span>
       </div>
     )
   }
@@ -193,39 +221,43 @@ export default function StatsPanel(props: StatsPanelProps) {
   const effectiveExpandedSection = expandedSection
 
   return (
-    <div className={`text-xs space-y-2 z-50 ${embedded ? "" : "mt-2 w-[220px] max-w-[220px]"}`}>
-      {/* Add search input */}
+    <div className={`text-xs space-y-2 z-50 bg-white ${embedded ? "" : "mt-2 w-[220px] max-w-[220px]"}`}>
       {!embedded && (
         <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <Search className="h-3 w-3 mr-1" />
-            <span>Statistics</span>
-            {isRefreshing && <Spinner className="h-3 w-3 ml-2" />}
+          <div className="relative flex-1">
+            <Search className="h-3 w-3 absolute left-2 top-1/2 transform -translate-y-1/2 panel-text-muted" />
+            <input
+              type="text"
+              placeholder="Search Ex Situ..."
+              className="w-full bg-transparent border panel-border rounded-md text-xs py-1 pl-7 pr-2 focus:outline-none focus:ring-1 focus:ring-gray-500"
+            />
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => fetchStats(false)}
-            className="h-6 w-6 p-0"
+            className="h-6 w-6 p-0 ml-2"
             disabled={isRefreshing}
           >
             <RefreshCw className="h-3 w-3" />
+            {isRefreshing && <Spinner className="h-3 w-3 absolute" />}
           </Button>
         </div>
       )}
 
       <div className="text-xs space-y-1">
         <div>
-          <span>Total links: {stats.total_count.toLocaleString()}</span>
+          <span className="panel-text-muted">Links:</span> <span>{stats.total_count.toLocaleString()}</span>
         </div>
         <div>
-          <span>Total countries: {stats.countries.length.toLocaleString()}</span>
+          <span className="panel-text-muted">Countries:</span> <span>{stats.countries.length.toLocaleString()}</span>
         </div>
         <div>
-          <span>Total arcs: {stats.cities.length.toLocaleString()}</span>
+          <span className="panel-text-muted">Cities:</span> <span>{stats.cities.length.toLocaleString()}</span>
         </div>
         <div>
-          <span>Total collections: {stats.institutions.length.toLocaleString()}</span>
+          <span className="panel-text-muted">Collections:</span>{" "}
+          <span>{stats.institutions.length.toLocaleString()}</span>
         </div>
         {isRefreshing && embedded && <Spinner className="h-3 w-3 ml-2 inline" />}
         {embedded && (
@@ -241,104 +273,88 @@ export default function StatsPanel(props: StatsPanelProps) {
         )}
       </div>
 
-      <div className="border-t border-gray-700 my-2"></div>
-
       {/* Countries */}
-      <div className="w-full">
-        <div
-          className="flex items-center justify-between cursor-pointer hover:bg-gray-700 p-1 rounded w-full"
-          onClick={() => toggleSection("countries")}
-        >
-          <span className="text-xs">Countries ({countries.length})</span>
-          {effectiveExpandedSection === "countries" || effectiveExpandedSection === "all" ? (
-            <ChevronUp className="h-3 w-3" />
-          ) : (
-            <ChevronDown className="h-3 w-3" />
-          )}
-        </div>
+      <div className="pt-2 mt-1 bg-white">
+        {renderSectionHeader("country", countries.length, "countries")}
 
         {(effectiveExpandedSection === "countries" || effectiveExpandedSection === "all") && (
-          <div className={`pl-2 mt-1 space-y-1 max-h-48 overflow-auto pr-1 w-full ${embedded ? "max-h-36" : ""}`}>
-            {countries.length > 0 ? (
-              countries.map((country, index) => (
-                <div key={index} className="flex justify-between">
-                  <span className="truncate max-w-[70%]">{country.country_en}</span>
-                  <span className="ml-2 flex-shrink-0">{country.total_objects.toLocaleString()}</span>
+          <div className="mt-1 pl-2 bg-white">
+            <div className="space-y-2">
+              {countries.length > 0 ? (
+                <div className={`space-y-0.5 max-h-48 overflow-auto pr-1 w-full ${embedded ? "max-h-36" : ""}`}>
+                  {countries.map((country, index) => (
+                    <div key={index} className="flex justify-between">
+                      <span className="truncate max-w-[70%]">{country.country_en}</span>
+                      <span className="ml-2 panel-text-muted">{country.total_objects.toLocaleString()}</span>
+                    </div>
+                  ))}
                 </div>
-              ))
-            ) : (
-              <div className="text-gray-500">No matching countries</div>
-            )}
+              ) : (
+                <div className="panel-text-muted">No matching countries</div>
+              )}
+            </div>
           </div>
         )}
       </div>
-
-      <div className="border-t border-gray-700 my-2"></div>
 
       {/* Cities */}
-      <div className="w-full">
-        <div
-          className="flex items-center justify-between cursor-pointer hover:bg-gray-700 p-1 rounded w-full"
-          onClick={() => toggleSection("cities")}
-        >
-          <span>Cities ({cities.length})</span>
-          {effectiveExpandedSection === "cities" || effectiveExpandedSection === "all" ? (
-            <ChevronUp className="h-3 w-3" />
-          ) : (
-            <ChevronDown className="h-3 w-3" />
-          )}
-        </div>
+      <div className="pt-2 mt-1 bg-white">
+        {renderSectionHeader("city", cities.length, "cities")}
 
         {(effectiveExpandedSection === "cities" || effectiveExpandedSection === "all") && (
-          <div className={`pl-2 mt-1 space-y-1 max-h-48 overflow-auto pr-1 w-full ${embedded ? "max-h-36" : ""}`}>
-            {cities.length > 0 ? (
-              cities.map((city, index) => (
-                <div key={index} className="flex justify-between">
-                  <span className="truncate max-w-[70%]">{city.city_en}</span>
-                  <span className="ml-2 flex-shrink-0">{city.total_objects.toLocaleString()}</span>
+          <div className="mt-1 pl-2 bg-white">
+            <div className="space-y-2">
+              {cities.length > 0 ? (
+                <div className={`space-y-0.5 max-h-48 overflow-auto pr-1 w-full ${embedded ? "max-h-36" : ""}`}>
+                  {cities.map((city, index) => (
+                    <div key={index} className="flex justify-between">
+                      <span className="truncate max-w-[70%]">{city.city_en}</span>
+                      <span className="ml-2 panel-text-muted">{city.total_objects.toLocaleString()}</span>
+                    </div>
+                  ))}
                 </div>
-              ))
-            ) : (
-              <div className="text-gray-500">No matching cities</div>
-            )}
+              ) : (
+                <div className="panel-text-muted">No matching cities</div>
+              )}
+            </div>
           </div>
         )}
       </div>
-
-      <div className="border-t border-gray-700 my-2"></div>
 
       {/* Institutions */}
-      <div className="w-full">
-        <div
-          className="flex items-center justify-between cursor-pointer hover:bg-gray-700 p-1 rounded w-full"
-          onClick={() => toggleSection("institutions")}
-        >
-          <span>Collections ({institutions.length})</span>
-          {effectiveExpandedSection === "institutions" || effectiveExpandedSection === "all" ? (
-            <ChevronUp className="h-3 w-3" />
-          ) : (
-            <ChevronDown className="h-3 w-3" />
-          )}
-        </div>
+      <div className="pt-2 mt-1 bg-white">
+        {renderSectionHeader("collection", institutions.length, "institutions")}
 
         {(effectiveExpandedSection === "institutions" || effectiveExpandedSection === "all") && (
-          <div className={`pl-2 mt-1 space-y-1 max-h-48 overflow-auto pr-1 w-full ${embedded ? "max-h-36" : ""}`}>
-            {institutions.length > 0 ? (
-              institutions.map((institution, index) => (
-                <div key={index} className="flex justify-between">
-                  <span className="truncate max-w-[70%]">{institution.institution_name}</span>
-                  <span className="ml-2 flex-shrink-0">{institution.total_objects.toLocaleString()}</span>
+          <div className="mt-1 pl-2 bg-white">
+            <div className="space-y-2">
+              {institutions.length > 0 ? (
+                <div className={`space-y-0.5 max-h-48 overflow-auto pr-1 w-full ${embedded ? "max-h-36" : ""}`}>
+                  {institutions.map((institution, index) => (
+                    <div key={index} className="flex flex-col">
+                      <div className="flex justify-between">
+                        <span className="truncate max-w-[70%]">{institution.institution_name}</span>
+                        <span className="ml-2 panel-text-muted">{institution.total_objects.toLocaleString()}</span>
+                      </div>
+                      {(institution.city || institution.country) && (
+                        <div className="panel-text-muted text-[10px]">
+                          {institution.city && institution.country
+                            ? `${institution.city}, ${institution.country}`
+                            : institution.city || institution.country}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))
-            ) : (
-              <div className="text-gray-500">No matching collections</div>
-            )}
+              ) : (
+                <div className="panel-text-muted">No matching collections</div>
+              )}
+            </div>
           </div>
         )}
       </div>
 
-      <div className="text-right text-gray-500 text-[10px]">Updated: {new Date().toLocaleTimeString()}</div>
+      <div className="text-right panel-text-muted text-[10px] mt-2">Updated: {new Date().toLocaleTimeString()}</div>
     </div>
   )
 }
-

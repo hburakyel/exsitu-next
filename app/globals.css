@@ -35,6 +35,16 @@
     --radius: 0.5rem;
   }
 
+  /* Light mode specific styles */
+  .light {
+    --panel-bg: 0 0% 100%;
+    --panel-border: 0 0% 90%;
+    --panel-text: 0 0% 0%;
+    --panel-text-muted: 0 0% 45%;
+    --panel-backdrop: 0 0% 100% / 0.9;
+  }
+
+  /* Dark mode specific styles */
   .dark {
     --background: 0 0% 0%;
     --foreground: 0 0% 100%;
@@ -63,12 +73,18 @@
     --border: 0 0% 20%;
     --input: 0 0% 20%;
     --ring: 0 0% 80%;
+
+    --panel-bg: 0 0% 0%;
+    --panel-border: 0 0% 20%;
+    --panel-text: 0 0% 100%;
+    --panel-text-muted: 0 0% 70%;
+    --panel-backdrop: 0 0% 0% / 0.8;
   }
 }
 
 @layer base {
   * {
-    @apply border-border font-mono text-sm font-normal;
+    @apply font-mono text-sm font-normal;
   }
   body {
     @apply bg-background text-foreground;
@@ -282,7 +298,7 @@ img {
 }
 
 /* RGB Green stroke border for image hover */
-.group-hover\:ring-\[rgb$$0\,255\,0$$\] {
+.group-hover\:ring-\[rgb\$0\,255\,0\$\] {
   box-shadow: 0 0 0 2px rgb(0, 255, 0);
 }
 
@@ -399,41 +415,30 @@ img {
 
 /* Add these styles at the end of the file to customize the Mapbox controls */
 
-/* Hide attribution */
-.mapboxgl-ctrl-attrib {
-  display: none !important;
-}
-
+/* Update the map control styles to have white background */
 /* Style navigation controls to match header */
 .mapboxgl-ctrl-group {
-  background-color: rgba(0, 0, 0, 0.8) !important;
+  background-color: white !important;
   border-radius: 6px !important;
-  border: none !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
 }
 
 .mapboxgl-ctrl-group button {
   width: 28px !important;
   height: 28px !important;
   margin: 0 !important;
-  color: white !important;
+  color: black !important;
   background-color: transparent !important;
   border: none !important;
 }
 
 .mapboxgl-ctrl-group button:hover {
-  background-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: rgba(0, 0, 0, 0.05) !important;
 }
 
 .mapboxgl-ctrl-group button span {
-  filter: invert(1) !important;
-}
-
-.mapboxgl-ctrl-group button.mapboxgl-ctrl-zoom-in,
-.mapboxgl-ctrl-group button.mapboxgl-ctrl-zoom-out {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  filter: none !important; /* Remove invert filter */
 }
 
 /* Style the globe button */
@@ -443,18 +448,26 @@ img {
   justify-content: center !important;
 }
 
+/* Style the globe icon */
+.mapboxgl-ctrl-globe svg {
+  width: 16px !important;
+  height: 16px !important;
+  stroke: black !important;
+  stroke-width: 2px !important;
+}
+
 /* Position the world view control below the navigation control */
 .world-view-control {
   margin-top: 5px !important;
 }
 
 /* Style the globe icon */
-.mapboxgl-ctrl-globe svg {
+/*.mapboxgl-ctrl-globe svg {
   width: 16px !important;
   height: 16px !important;
   stroke: white !important;
   stroke-width: 2px !important;
-}
+}*/
 
 /* Hide Mapbox logo */
 .mapboxgl-ctrl-logo {
@@ -476,11 +489,6 @@ img {
   background-color: transparent !important;
   padding: 0 !important;
   border-radius: 6px !important;
-}
-
-.arc-tooltip .mapboxgl-popup-tip {
-  border-top-color: rgba(0, 0, 0, 0.85) !important;
-  border-bottom-color: rgba(0, 0, 0, 0.85) !important;
 }
 
 .arc-tooltip-content {
@@ -545,3 +553,141 @@ img {
   position: fixed;
 }
 
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-in-out forwards;
+}
+
+/* Vercel-style loading gradient */
+.loading-gradient {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0) 0%, rgba(0, 255, 0, 0.1) 50%, rgba(0, 0, 0, 0) 100%);
+  background-size: 200% 100%;
+  animation: gradientMove 1.5s infinite;
+}
+
+@keyframes gradientMove {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+/* Panel styling for light/dark mode */
+.panel {
+  background-color: hsl(var(--panel-bg));
+  color: hsl(var(--panel-text));
+  border-color: hsl(var(--panel-border));
+  backdrop-filter: blur(8px);
+}
+
+.panel-backdrop {
+  background-color: hsl(var(--panel-backdrop));
+}
+
+.panel-border {
+  border: 1px solid hsl(var(--panel-border));
+}
+
+.panel-text-muted {
+  color: hsl(var(--panel-text-muted));
+}
+
+/* Add these styles at the end of the file */
+.bg-white {
+  background-color: white !important;
+}
+
+/* Ensure consistent border colors */
+.border-gray-200 {
+  border-color: #e5e5e5 !important;
+}
+
+/* Ensure consistent text colors */
+.text-gray-500 {
+  color: #6b7280 !important;
+}
+
+/* Ensure consistent spacing */
+.gap-2 {
+  gap: 0.5rem !important;
+}
+
+.gap-3 {
+  gap: 0.75rem !important;
+}
+
+.gap-4 {
+  gap: 1rem !important;
+}
+
+/* Improve mobile responsiveness */
+@media (max-width: 640px) {
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  .grid-cols-1 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Remove all borders */
+.border,
+.border-t,
+.border-b,
+.border-l,
+.border-r,
+.border-gray-100,
+.border-gray-200,
+.border-gray-300,
+.border-gray-400,
+.border-gray-500,
+.border-gray-600,
+.border-gray-700,
+.border-gray-800,
+.border-gray-900 {
+  border: none !important;
+}
+
+/* Ensure no borders on hover */
+*:hover {
+  border: none !important;
+}
+
+/* Remove panel borders */
+.panel-border {
+  border: none !important;
+}
+
+/* Ensure consistent spacing without borders */
+.p-3,
+.p-4,
+.px-3,
+.px-4,
+.py-3,
+.py-4 {
+  padding: 0.75rem !important;
+}
+
+/* Add subtle shadow instead of borders for separation */
+.shadow-subtle {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Improve separation between items without borders */
+.space-y-2 > * + * {
+  margin-top: 0.5rem !important;
+}

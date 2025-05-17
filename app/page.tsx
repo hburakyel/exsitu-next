@@ -47,6 +47,8 @@ export default function Home() {
   const [containerSize, setContainerSize] = useState<ContainerSize>("default")
   // Add a new state variable for the search box
   const [showSearchBox, setShowSearchBox] = useState(false)
+  // Add a new state variable for object container visibility
+  const [isObjectContainerVisible, setIsObjectContainerVisible] = useState(true)
 
   // Add this handler function
   const handleMapError = useCallback((error: string) => {
@@ -372,12 +374,66 @@ export default function Home() {
 
   // Toggle container size
   const toggleContainerSize = useCallback(() => {
-    setContainerSize((prev) => {
-      if (prev === "default") return "expanded"
-      if (prev === "expanded") return "minimal"
-      return "default"
-    })
+    setContainerSize((prev) => (prev === "default" ? "expanded" : "default"))
   }, [])
+
+  // Add a downloadCSV function to the Home component
+  // Add this function after the toggleContainerSize function
+
+  const downloadObjectsAsCSV = useCallback(() => {
+    // Create CSV header
+    const headers = [
+      "ID",
+      "Title",
+      "Inventory Number",
+      "From Place",
+      "From City",
+      "From Country",
+      "To Institution",
+      "To Place",
+      "To City",
+      "To Country",
+      "Longitude",
+      "Latitude",
+      "Institution Longitude",
+      "Institution Latitude",
+    ].join(",")
+
+    // Convert objects to CSV rows
+    const csvRows = displayObjects.map((obj) => {
+      const attrs = obj.attributes
+      return [
+        obj.id,
+        `"${(attrs.title || "").replace(/"/g, '""')}"`,
+        `"${(attrs.inventory_number || "").replace(/"/g, '""')}"`,
+        `"${(attrs.place_name || "").replace(/"/g, '""')}"`,
+        `"${(attrs.city_en || "").replace(/"/g, '""')}"`,
+        `"${(attrs.country_en || "").replace(/"/g, '""')}"`,
+        `"${(attrs.institution_name || "").replace(/"/g, '""')}"`,
+        `"${(attrs.institution_place || "").replace(/"/g, '""')}"`,
+        `"${(attrs.institution_city_en || "").replace(/"/g, '""')}"`,
+        `"${(attrs.institution_country_en || "").replace(/"/g, '""')}"`,
+        attrs.longitude || "",
+        attrs.latitude || "",
+        attrs.institution_longitude || "",
+        attrs.institution_latitude || "",
+      ].join(",")
+    })
+
+    // Combine header and rows
+    const csvContent = [headers, ...csvRows].join("\n")
+
+    // Create a blob and download link
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.setAttribute("href", url)
+    link.setAttribute("download", `ex-situ-objects-${new Date().toISOString().split("T")[0]}.csv`)
+    link.style.visibility = "hidden"
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }, [displayObjects])
 
   // Add this effect to select a random arc after initial data load
   useEffect(() => {
@@ -485,6 +541,11 @@ export default function Home() {
     checkValidObjects()
   }, [objects])
 
+  // Add a toggle function
+  const toggleObjectContainerVisibility = useCallback(() => {
+    setIsObjectContainerVisible((prev) => !prev)
+  }, [])
+
   if (error) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-red-50 text-red-500">
@@ -521,6 +582,9 @@ export default function Home() {
           containerSize={containerSize}
           locationName={locationName}
           setShowSearchBox={setShowSearchBox}
+          onDownloadCSV={downloadObjectsAsCSV}
+          isObjectContainerVisible={isObjectContainerVisible}
+          toggleObjectContainerVisibility={toggleObjectContainerVisibility}
         />
 
         {mapLoadError && (
@@ -537,7 +601,7 @@ export default function Home() {
         )}
 
         {/* Object grid floating panel */}
-        {isObjectGridVisible && (
+        {isObjectGridVisible && isObjectContainerVisible && (
           <ResizableObjectContainer
             objects={displayObjects}
             onLoadMore={handleLoadMore}
@@ -554,8 +618,6 @@ export default function Home() {
             setViewMode={setViewMode}
             containerSize={containerSize}
             setContainerSize={setContainerSize}
-            showSearchBox={showSearchBox}
-            setShowSearchBox={setShowSearchBox}
           />
         )}
 
@@ -582,4 +644,3 @@ export default function Home() {
     </main>
   )
 }
-

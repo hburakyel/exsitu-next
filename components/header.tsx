@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react"
 import { ThemeToggle } from "./theme-toggle"
 import Link from "next/link"
+import { useTheme } from "next-themes"
 
 export default function Header() {
   const [visible, setVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
+  const { theme } = useTheme()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -56,4 +58,3 @@ export default function Header() {
     </header>
   )
 }
-

@@ -56,4 +56,3 @@ export interface CityAggregation {
   latitude: number
   longitude: number
 }
-

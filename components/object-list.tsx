@@ -4,6 +4,8 @@ import { useState, useEffect } from "react"
 import type { MuseumObject } from "../types"
 import { Spinner } from "@/components/ui/spinner"
 import { useInView } from "react-intersection-observer"
+import { useMediaQuery } from "../hooks/use-media-query"
+import { ExternalLink } from "lucide-react"
 
 interface ObjectListProps {
   objects: MuseumObject[]
@@ -87,29 +89,40 @@ export default function ObjectList({
     )
   }
 
+  const isMobile = useMediaQuery("(max-width: 768px)")
+
   return (
-    <div className="h-full overflow-auto bg-black/80 backdrop-blur-md pt-0 pb-4 pl-4 pr-4">
+    <div className="h-full overflow-auto bg-white pt-0 pb-4 pl-4 pr-4">
       {/* CSV-like header */}
-      <div className="sticky top-0 bg-black/80 py-2 z-10 text-sm text-muted-foreground border-b border-gray-700 backdrop-blur-md mb-2">
-        <div className="grid grid-cols-[60px_1fr_100px_1fr_1fr_1fr_1fr] gap-2">
-          <div>Image</div>
-          <div>Title</div>
-          <div>ID</div>
-          <div>From</div>
-          <div>To</div>
-          <div>Institution</div>
-          <div>Link</div>
+      {!isMobile ? (
+        <div className="sticky top-0 bg-white py-2 z-10 text-sm text-gray-500 mb-2">
+          <div className="grid grid-cols-[60px_minmax(100px,1fr)_minmax(80px,100px)_minmax(80px,1fr)_minmax(80px,1fr)_minmax(80px,1fr)_minmax(80px,1fr)] gap-2">
+            <div>Image</div>
+            <div className="truncate">Title</div>
+            <div className="truncate">ID</div>
+            <div className="truncate">From</div>
+            <div className="truncate">To</div>
+            <div className="truncate">Institution</div>
+            <div className="truncate">Link</div>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="sticky top-0 bg-white py-2 z-10 text-sm text-gray-500 mb-2">
+          <div className="grid grid-cols-[60px_1fr] gap-2">
+            <div>Image</div>
+            <div>Details</div>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-2">
         {objects.map((object, index) => {
           const linkInfo = getLinkInfo(object)
 
-          return (
+          return !isMobile ? (
             <div
               key={object.id}
-              className={`grid grid-cols-[60px_1fr_100px_1fr_1fr_1fr_1fr] gap-2 items-center px-2 py-2 hover:ring-2 hover:ring-blue-500 cursor-pointer rounded-md ${
+              className={`grid grid-cols-[60px_minmax(100px,1fr)_minmax(80px,100px)_minmax(80px,1fr)_minmax(80px,1fr)_minmax(80px,1fr)_minmax(80px,1fr)] gap-2 items-center px-2 py-2 hover:ring-2 hover:ring-blue-500 cursor-pointer rounded-md bg-white ${
                 selectedId === object.id ? "ring-2 ring-blue-500" : ""
               }`}
               onClick={() => {
@@ -117,8 +130,9 @@ export default function ObjectList({
                 handleItemClick(object, index)
               }}
             >
+              {/* Desktop layout - keep existing code */}
               {/* Image preview */}
-              <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden flex items-center justify-center">
+              <div className="w-12 h-12 bg-white rounded overflow-hidden flex items-center justify-center">
                 {object.attributes.img_url ? (
                   <img
                     src={object.attributes.img_url || "/placeholder.svg"}
@@ -129,7 +143,7 @@ export default function ObjectList({
                     }}
                   />
                 ) : (
-                  <span className="text-xs text-gray-500 dark:text-gray-400">No img</span>
+                  <span className="text-xs text-gray-500">No img</span>
                 )}
               </div>
 
@@ -147,7 +161,7 @@ export default function ObjectList({
                     href={linkInfo.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-400 hover:text-blue-300 hover:underline"
+                    className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 hover:underline"
                     onClick={(e) => e.stopPropagation()} // Prevent row click when clicking the link
                   >
                     {linkInfo.text}
@@ -157,12 +171,79 @@ export default function ObjectList({
                 )}
               </div>
             </div>
+          ) : (
+            // Mobile-optimized layout
+            <div
+              key={object.id}
+              className={`grid grid-cols-[60px_1fr] gap-4 p-3 hover:ring-2 hover:ring-blue-500 cursor-pointer rounded-md bg-white ${
+                selectedId === object.id ? "ring-2 ring-blue-500" : ""
+              }`}
+              onClick={() => {
+                setSelectedId(object.id)
+                handleItemClick(object, index)
+              }}
+            >
+              {/* Image preview */}
+              <div className="w-14 h-14 bg-white rounded overflow-hidden flex items-center justify-center">
+                {object.attributes.img_url ? (
+                  <img
+                    src={object.attributes.img_url || "/placeholder.svg"}
+                    alt={object.attributes.title || "Object"}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = "/placeholder.svg?height=56&width=56"
+                    }}
+                  />
+                ) : (
+                  <span className="text-xs text-gray-500">No img</span>
+                )}
+              </div>
+
+              {/* Mobile-optimized details */}
+              <div className="flex flex-col">
+                <div className="text-sm font-medium truncate">
+                  {object.attributes.title || object.attributes.inventory_number || "Untitled"}
+                </div>
+                <div className="grid grid-cols-2 gap-x-2 gap-y-1 mt-1">
+                  <div className="text-xs">
+                    <span className="text-gray-500">ID: </span>
+                    <span>{object.attributes.inventory_number || "N/A"}</span>
+                  </div>
+                  <div className="text-xs">
+                    <span className="text-gray-500">From: </span>
+                    <span className="truncate">{object.attributes.place_name || "Unknown"}</span>
+                  </div>
+                  <div className="text-xs">
+                    <span className="text-gray-500">To: </span>
+                    <span className="truncate">{object.attributes.institution_place || "Unknown"}</span>
+                  </div>
+                  <div className="text-xs">
+                    <span className="text-gray-500">Collection: </span>
+                    <span className="truncate">{object.attributes.institution_name || "Unknown"}</span>
+                  </div>
+                </div>
+                {linkInfo.url && (
+                  <div className="mt-1">
+                    <a
+                      href={linkInfo.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:underline flex items-center"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ExternalLink className="h-3 w-3 mr-1" />
+                      <span className="truncate">View source</span>
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
           )
         })}
       </div>
 
       {objects.length === 0 && !isLoading && (
-        <div className="text-center py-8 text-sm text-muted-foreground">No objects found in this area.</div>
+        <div className="text-center py-8 text-sm text-gray-500 bg-white">No objects found in this area.</div>
       )}
 
       {hasMore && <div ref={ref} className="h-10" />}
@@ -174,4 +255,3 @@ export default function ObjectList({
     </div>
   )
 }
-

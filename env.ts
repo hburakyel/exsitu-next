@@ -3,4 +3,3 @@ export const env = {
   STRAPI_WEBHOOK_TOKEN: process.env.STRAPI_WEBHOOK_TOKEN || "",
   VERCEL_ENV: process.env.VERCEL_ENV || "development",
 }
-

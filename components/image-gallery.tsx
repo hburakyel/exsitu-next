@@ -145,14 +145,14 @@ export default function ImageGallery({
           width: isMobile ? "100%" : "100%",
           height: isMobile ? "100%" : "100%",
           maxHeight: isMobile ? "100%" : "100%",
-          backgroundColor: "rgba(0, 0, 0, 0.8)",
-          color: "white",
+          backgroundColor: "white",
+          color: "black",
           borderRadius: isMobile ? "0" : "8px",
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
           zIndex: 50,
-          border: isMobile ? "none" : "1px solid #333333",
+          border: "none",
           backdropFilter: "blur(8px)",
         }}
       >
@@ -160,20 +160,20 @@ export default function ImageGallery({
         <div
           style={{
             padding: isMobile ? "16px" : "12px",
-            borderBottom: "1px solid #333333",
+            borderBottom: "none",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            backgroundColor: "white",
           }}
         >
           <div style={{ fontSize: "14px" }}>
-            <span style={{ color: "white" }}>
+            <span style={{ color: "black" }}>
               {currentIndex + 1} / {objects.length}
             </span>
             {currentObject.attributes.inventory_number && (
-              <span style={{ color: "#999", marginLeft: "8px" }}>
-                ID: <span style={{ color: "white" }}>{currentObject.attributes.inventory_number}</span>
+              <span style={{ color: "#666", marginLeft: "8px" }}>
+                ID: <span style={{ color: "black" }}>{currentObject.attributes.inventory_number}</span>
               </span>
             )}
           </div>
@@ -215,22 +215,22 @@ export default function ImageGallery({
         <div
           style={{
             padding: "8px 16px",
-            borderBottom: "1px solid #333333",
+            borderBottom: "none",
             fontSize: "14px",
-            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            backgroundColor: "white",
           }}
         >
           <div style={{ display: "flex", flexWrap: "wrap", gap: "16px" }}>
             <div>
-              <span style={{ color: "#999" }}>From: </span>
+              <span style={{ color: "var(--panel-text-muted, #666)" }}>From: </span>
               <span>{currentObject.attributes.place_name || "Unknown"}</span>
             </div>
             <div>
-              <span style={{ color: "#999" }}>To: </span>
+              <span style={{ color: "var(--panel-text-muted, #666)" }}>To: </span>
               <span>{currentObject.attributes.institution_place || "Unknown"}</span>
             </div>
             <div>
-              <span style={{ color: "#999" }}>Collection: </span>
+              <span style={{ color: "var(--panel-text-muted, #666)" }}>Collection: </span>
               <span>{currentObject.attributes.institution_name || "Unknown"}</span>
             </div>
           </div>
@@ -246,7 +246,7 @@ export default function ImageGallery({
             position: "relative",
             overflow: "hidden",
             minHeight: "0",
-            backgroundColor: "black",
+            backgroundColor: "white",
           }}
         >
           {isLoading && !imageError && (
@@ -271,6 +271,7 @@ export default function ImageGallery({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                backgroundColor: "white",
               }}
             >
               <img
@@ -280,7 +281,7 @@ export default function ImageGallery({
                   maxHeight: "100%",
                   maxWidth: "100%",
                   objectFit: "contain",
-                  backgroundColor: "black",
+                  backgroundColor: "white", // Changed from black to white
                   margin: "0",
                   padding: "0",
                   display: "block",
@@ -298,6 +299,7 @@ export default function ImageGallery({
                 textAlign: "center",
                 height: "100%",
                 width: "100%",
+                backgroundColor: "white", // Added white background
               }}
             >
               <span style={{ color: "#999", fontSize: "14px" }}>
@@ -310,4 +312,3 @@ export default function ImageGallery({
     </>
   )
 }
-

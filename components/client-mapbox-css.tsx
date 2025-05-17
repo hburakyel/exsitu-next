@@ -7,4 +7,3 @@ const MapboxCSS = dynamic(() => import("@/components/mapbox-css"), { ssr: false 
 export default function ClientMapboxCSS() {
   return <MapboxCSS />
 }
-

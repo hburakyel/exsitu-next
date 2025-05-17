@@ -359,4 +359,3 @@ export function filterArcsByBounds(
     return sourceInBounds || targetInBounds
   })
 }
-

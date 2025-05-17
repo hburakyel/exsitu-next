@@ -49,6 +49,8 @@ export default function SearchBox({ onLocationFound, onClose }: SearchBoxProps) 
     }
   }
 
+  // Update the handleSearch function to properly handle search results:
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!query.trim()) return
@@ -61,9 +63,9 @@ export default function SearchBox({ onLocationFound, onClose }: SearchBoxProps) 
     try {
       const result = await searchLocation(query)
       if (result) {
-        console.log("Search result:", result) // Add logging
-        onLocationFound(result.longitude, result.latitude, result.name)
+        console.log("Search result:", result)
         saveRecentSearch(query)
+        onLocationFound(result.longitude, result.latitude, result.name)
         setQuery("") // Clear the input after successful search
         if (onClose) onClose() // Always close the search box after successful search
       } else {
@@ -77,32 +79,31 @@ export default function SearchBox({ onLocationFound, onClose }: SearchBoxProps) 
     }
   }
 
-  // Also update the handleRecentSearchClick function to ensure it works correctly
-  const handleRecentSearchClick = (searchTerm: string) => {
+  // Also update the handleRecentSearchClick function:
+
+  const handleRecentSearchClick = async (searchTerm: string) => {
+    if (isSearching) return
+
+    setIsSearching(true)
+    setError(null)
     setQuery(searchTerm)
 
-    // Submit the form directly instead of using setTimeout
-    const form = document.getElementById("search-form") as HTMLFormElement
-    if (form && !isSearching) {
-      // Set the query and immediately submit the form
-      setQuery(searchTerm)
-      // Use a direct search instead of form submission to avoid race conditions
-      searchLocation(searchTerm)
-        .then((result) => {
-          if (result) {
-            console.log("Recent search result:", result) // Add logging
-            onLocationFound(result.longitude, result.latitude, result.name)
-            saveRecentSearch(searchTerm)
-            setQuery("") // Clear the input after successful search
-            if (onClose) onClose() // Always close the search box after successful search
-          } else {
-            setError("Location not found. Please try a different search.")
-          }
-        })
-        .catch((error) => {
-          console.error("Error searching location:", error)
-          setError("An error occurred while searching. Please try again.")
-        })
+    try {
+      const result = await searchLocation(searchTerm)
+      if (result) {
+        console.log("Recent search result:", result)
+        saveRecentSearch(searchTerm)
+        onLocationFound(result.longitude, result.latitude, result.name)
+        setQuery("") // Clear the input after successful search
+        if (onClose) onClose() // Always close the search box after successful search
+      } else {
+        setError("Location not found. Please try a different search.")
+      }
+    } catch (error) {
+      console.error("Error searching location:", error)
+      setError("An error occurred while searching. Please try again.")
+    } finally {
+      setIsSearching(false)
     }
   }
 
@@ -114,7 +115,7 @@ export default function SearchBox({ onLocationFound, onClose }: SearchBoxProps) 
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 bg-white">
       <form id="search-form" onSubmit={handleSearch} className="relative w-full">
         <Input
           ref={inputRef}
@@ -142,14 +143,14 @@ export default function SearchBox({ onLocationFound, onClose }: SearchBoxProps) 
       {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
 
       {recentSearches.length > 0 && !query && (
-        <div className="mt-2">
-          <h4 className="text-xs text-gray-400 mb-1">Recent Searches</h4>
+        <div className="mt-2 bg-white">
+          <h4 className="text-xs text-gray-500 mb-1">Recent Searches</h4>
           <div className="flex flex-wrap gap-1">
             {recentSearches.map((search, index) => (
               <button
                 key={index}
                 onClick={() => handleRecentSearchClick(search)}
-                className="text-xs bg-gray-700 hover:bg-gray-600 rounded px-2 py-1 truncate max-w-full"
+                className="text-xs bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded px-2 py-1 truncate max-w-full"
               >
                 {search}
               </button>
@@ -160,4 +161,3 @@ export default function SearchBox({ onLocationFound, onClose }: SearchBoxProps) 
     </div>
   )
 }
-

@@ -397,8 +397,13 @@ export async function searchLocation(query: string): Promise<SearchResult | null
 
     const url = `/api/mapbox-proxy?${params.toString()}`
     console.log("Searching location with URL:", url)
-    const data = await fetchWithRateLimit(url)
 
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`Search API returned status: ${response.status}`)
+    }
+
+    const data = await response.json()
     console.log("Mapbox API response:", JSON.stringify(data))
 
     if (data.features?.length > 0) {
@@ -433,4 +438,3 @@ export function clearApiCache() {
   Object.keys(apiCache).forEach((key) => delete apiCache[key])
   console.log("API cache cleared")
 }
-

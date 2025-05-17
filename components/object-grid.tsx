@@ -135,7 +135,7 @@ export default function ObjectGrid({
 
   if (isLoading && objects.length === 0) {
     return (
-      <div className="flex justify-center items-center h-full">
+      <div className="flex justify-center items-center h-full bg-white">
         <Spinner className="h-8 w-8" />
       </div>
     )
@@ -143,15 +143,15 @@ export default function ObjectGrid({
 
   if (objects.length === 0 && !isLoading) {
     return (
-      <div className="flex flex-col justify-center items-center h-full p-4 text-center">
-        <p className="text-sm text-muted-foreground mb-4">No objects found in this area.</p>
-        <p className="text-xs text-muted-foreground">Try zooming out or panning to a different location on the map.</p>
+      <div className="flex flex-col justify-center items-center h-full p-4 text-center bg-white">
+        <p className="text-sm text-gray-500 mb-4">No objects found in this area.</p>
+        <p className="text-xs text-gray-500">Try zooming out or panning to a different location on the map.</p>
       </div>
     )
   }
 
   return (
-    <div ref={containerRef} className="h-full overflow-auto px-4 pt-4 pb-4 bg-black/80 backdrop-blur-md">
+    <div ref={containerRef} className="h-full overflow-auto px-4 pt-4 pb-4 bg-white">
       <div className={`grid ${gridClass} gap-3`}>
         {visibleObjects.map((object, index) => {
           const isSelected = object.id === selectedImageId
@@ -159,26 +159,25 @@ export default function ObjectGrid({
           return (
             <div
               key={object.id}
-              className={`group relative cursor-pointer overflow-hidden rounded-md transition-all duration-200 ${
+              className={`group relative cursor-pointer overflow-hidden rounded-md transition-all duration-200 bg-white ${
                 isSelected ? "ring-2 ring-blue-500" : ""
               }`}
               onClick={() => handleImageClick(index)}
               onMouseEnter={() => setSelectedImageId(object.id)}
               onMouseLeave={() => setSelectedImageId(null)}
             >
-              <div className="relative w-full pt-[100%] overflow-hidden">
+              <div className="relative w-full pt-[100%] overflow-hidden bg-white">
                 {!brokenImages[object.id] ? (
                   <img
                     src={object.attributes?.img_url || ""}
                     alt={object.attributes?.title || "Museum object"}
-                    className="absolute inset-0 w-full h-full object-contain bg-transparent"
+                    className="absolute inset-0 w-full h-full object-contain bg-white"
                     onError={() => handleImageError(object.id)}
                     loading="lazy"
-                    style={{ backgroundColor: "transparent" }}
                   />
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-center p-2">
-                    <span className="text-muted-foreground text-xs">
+                  <div className="absolute inset-0 flex items-center justify-center text-center p-2 bg-white">
+                    <span className="text-gray-500 text-xs">
                       {object.attributes.inventory_number || "Image unavailable"}
                     </span>
                   </div>
@@ -198,4 +197,3 @@ export default function ObjectGrid({
     </div>
   )
 }
-
